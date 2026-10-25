@@ -42,6 +42,8 @@ export default function CreerEvaluation({ data, currentUser, evaluationId, onDon
   const errors = validateForLaunch(input, currentUser, data.users, today)
   const shownErrors = triedLaunch ? errors : {}
   const subjects = allowedSubjects(currentUser, data.users)
+  // Tant qu'il n'existe qu'un formulaire, le choix est imposé : le champ est grisé.
+  const singleForm = data.forms.length <= 1
   const eligibleIds = new Set(eligibleParticipants(input.subjectId, data.users).map((u) => u.id))
 
   // Personnes regroupées par équipe (manager en tête) pour faciliter le choix.
@@ -142,15 +144,21 @@ export default function CreerEvaluation({ data, currentUser, evaluationId, onDon
               className={inputClass}
             />
           </Field>
-          <Field label="Formulaire *" htmlFor="form" error={shownErrors.formId}>
+          <Field
+            label="Formulaire *"
+            htmlFor="form"
+            error={shownErrors.formId}
+            hint={singleForm ? 'Un seul formulaire disponible (éditeur de formulaires hors prototype).' : undefined}
+          >
             <select
               id="form"
               value={input.formId}
               onChange={(e) => update('formId', e.target.value)}
+              disabled={singleForm}
               aria-invalid={!!shownErrors.formId}
-              className={inputClass}
+              className={`${inputClass} disabled:cursor-not-allowed disabled:bg-cream disabled:text-muted`}
             >
-              <option value="">— Choisir —</option>
+              {!singleForm && <option value="">— Choisir —</option>}
               {data.forms.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}

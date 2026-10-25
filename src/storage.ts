@@ -3,7 +3,7 @@ import type { AppData } from './domain/types'
 
 const STORAGE_KEY = 'feedback-prototype'
 // À incrémenter dès que la forme des données change : les anciennes données sont alors remplacées par les données de départ.
-const STORAGE_VERSION = 2
+const STORAGE_VERSION = 3
 
 export interface PersistedState {
   version: number

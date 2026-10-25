@@ -43,7 +43,7 @@ Une seule équipe de 4 personnes.
 1. **Historique** — Profil *User 1 (Léa)* → onglet *Historique* → *Voir les résultats* de « Évaluation S1 2026 » : note moyenne, réponses détaillées nommées, personne n'ayant pas répondu (expiré).
 2. **Créer et lancer** — Profil *Manager (Marc)* → *Mes évaluations* → *Créer une évaluation*. Choisir *Léa Martin* comme personne évaluée. Cliquer *Lancer* à vide pour montrer les messages d'erreur (date limite au plus tôt demain, Lancer inactif sans personne). Interroger Hugo, puis *Lancer*.
 3. **Répondre** — Profil *User 2 (Hugo)* → onglet *Feedback* (le compteur affiche 3) → *Répondre* sur la nouvelle évaluation de Léa. Donner une note, *Envoyer* → envoi bloqué (question obligatoire). *Enregistrer en brouillon*, revenir, *Reprendre*, compléter, *Envoyer*. La réponse devient non modifiable.
-4. **Suivre** — Profil *User 1 (Léa)* → *Mes évaluations* → *Suivre* : compteur « 1/1 terminés », statuts par personne, contenu masqué. *Ajouter une personne* (Inès) : elle reçoit une demande, le compteur passe à « 1/2 ».
+4. **Suivre** — Profil *User 1 (Léa)* → *Mes évaluations* → *Suivre* : compteur « 1/1 terminés », statuts par personne, contenu masqué. *Ajouter une personne* (Inès) : elle reçoit une demande, le compteur passe à « 1/2 ». Puis *Retirer* Inès : après confirmation, sa demande disparaît de son onglet *Feedback* et le compteur revient à « 1/1 ». Hugo, qui a déjà répondu, n'a pas de bouton *Retirer*.
 5. **Cloisonnement** — Profil *User 3 (Inès)* : elle voit la demande dans *Feedback*, mais ni l'évaluation de Léa dans *Mes évaluations*, ni ses résultats S1 dans *Historique*. Seuls Léa et son manager y ont accès.
 6. **Clôturer et consulter** — Profil *Manager (Marc)* → *Mon équipe* → *Suivre* l'évaluation de Léa → *Clôturer* → confirmation (les demandes non terminées passent « Expiré »). *Voir les résultats*. Profil *User 1 (Léa)* → *Historique* : ses deux évaluations y sont.
 
@@ -55,12 +55,28 @@ La logique métier est isolée dans des fonctions pures (`src/domain`), les écr
 |---|---|
 | `src/domain/types.ts` | Modèle : User, Form, Evaluation, FeedbackRequest et leurs statuts |
 | `src/domain/seed.ts` | Données de départ |
-| `src/domain/evaluations.ts` | Création, validations, lancement, ajout de personne, clôture (règles 1 à 6, 10) |
+| `src/domain/evaluations.ts` | Création, validations, lancement, ajout et retrait de personne, clôture (règles 1 à 6, 6 bis, 10) |
 | `src/domain/requests.ts` | Réponses, brouillon, champs obligatoires, retard, compteur (règles 7, 11) |
-| `src/domain/access.ts` | Qui voit quoi, qui peut faire quoi (règles 6, 8, 9, 10) |
+| `src/domain/access.ts` | Qui voit quoi, qui peut faire quoi (règles 6, 6 bis, 8, 9, 10) |
 | `src/domain/results.ts` | Synthèse des résultats (moyenne, options cochées) |
 | `src/storage.ts` | Sauvegarde localStorage (clé unique `feedback-prototype`, versionnée) |
 | `src/index.css` | Couleurs et police (charte inspirée de hello-pomelo.com) |
+
+### Règle 6 bis : retirer une personne d'une évaluation en cours
+
+Symétrique de l'ajout (règle 6), ajoutée après le prompt initial.
+
+| Situation | Retrait possible ? |
+|---|---|
+| Qui retire | Les mêmes personnes que pour ajouter ou clôturer : créateur, personne évaluée, son manager (`canManage`) |
+| Évaluation en brouillon ou clôturée | Non |
+| Demande « Envoyé » | Oui : la demande est supprimée et la personne retirée de la liste |
+| Demande « Brouillon » (réponse commencée) | Oui, mais la confirmation prévient que le brouillon de réponse sera perdu |
+| Demande « Terminé » | Non : le feedback donné est conservé |
+| Dernière personne interrogée | Non : message invitant à clôturer l'évaluation à la place |
+| Personne retirée puis ajoutée de nouveau | Oui : elle reçoit une nouvelle demande « Envoyé » |
+
+Les compteurs (« x/y terminés », « N feedbacks à compléter ») se recalculent d'eux-mêmes.
 
 ## Hypothèses retenues
 
@@ -125,6 +141,7 @@ Un prompt détaillé demandait un prototype React + Vite + TypeScript strict + T
 | Ajouter des données d'exemple couvrant tous les cas | Corpus de départ avec tous les statuts d'évaluation et de demande, un cas en retard, l'auto-évaluation d'un manager, un brouillon | `93da8c8` |
 | Réduire à 1 manager et 3 collaborateurs | 10 personnes → 4 (Marc, Léa, Hugo, Inès). Corpus, README et parcours de démo réécrits | `b6b1995` |
 | Griser le champ Formulaire | Champ inactif tant qu'il n'existe qu'un formulaire, avec une explication en dessous. Il se réactive tout seul si un 2e formulaire est ajouté | `a8ac2ab` |
+| Retirer une personne d'une évaluation en cours (règle 6 bis) | Fonctions pures `removeParticipantError` / `removeParticipant`, bouton *Retirer* par ligne dans le suivi, confirmation avec avertissement si un brouillon de réponse existe | voir `git log` |
 
 ### Écarts par rapport au prompt initial (assumés)
 

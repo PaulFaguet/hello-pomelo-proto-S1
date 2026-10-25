@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import { canManage, canViewContent, canViewProgress } from '../domain/access'
 import { formatDate, todayISO } from '../domain/dates'
-import { addParticipant, addParticipantError, closeEvaluation, isEvaluationLate, progress } from '../domain/evaluations'
+import {
+  addParticipant,
+  addParticipantError,
+  closeEvaluation,
+  isEvaluationLate,
+  progress,
+  removeParticipant,
+  removeParticipantError,
+} from '../domain/evaluations'
 import { EVALUATION_STATUS_LABELS, REQUEST_STATUS_LABELS } from '../domain/labels'
 import type { AppData, User } from '../domain/types'
 import { Badge, Button, ConfirmDialog, inputClass } from '../ui'
@@ -20,6 +28,7 @@ export default function SuiviEvaluation({ data, currentUser, evaluationId, onCha
   const [newPerson, setNewPerson] = useState('')
   const [addError, setAddError] = useState<string | null>(null)
   const [confirmClose, setConfirmClose] = useState(false)
+  const [toRemove, setToRemove] = useState<string | null>(null) // id de la personne à retirer, en attente de confirmation
 
   // Règle 8 : garde-fou, même si l'interface ne propose jamais ce lien à une personne non autorisée.
   if (!evaluation || !canViewProgress(evaluation, currentUser, data.users)) {
@@ -37,6 +46,23 @@ export default function SuiviEvaluation({ data, currentUser, evaluationId, onCha
     const error = addParticipantError(evaluation!, newPerson)
     if (error) return setAddError(error)
     onChange(addParticipant(data, evaluation!.id, newPerson), `${nameOf(newPerson)} a été ajouté·e : une demande lui est envoyée.`)
+  }
+
+  // Règle 6 bis : le bouton "Retirer" n'apparaît que si l'utilisateur gère l'évaluation et que le retrait est autorisé.
+  const canRemove = (userId: string) => manageable && !removeParticipantError(evaluation, data.requests, userId)
+  // Cas de la dernière personne : on explique pourquoi aucun bouton "Retirer" n'est proposé.
+  const lastPersonHint =
+    manageable && requests.length === 1 && requests[0].status !== 'termine'
+      ? removeParticipantError(evaluation, data.requests, requests[0].authorId)
+      : null
+  const requestToRemove = requests.find((r) => r.authorId === toRemove)
+
+  function handleRemove() {
+    if (!toRemove) return
+    const error = removeParticipantError(evaluation!, data.requests, toRemove)
+    setToRemove(null)
+    if (error) return setAddError(error)
+    onChange(removeParticipant(data, evaluation!.id, toRemove), `${nameOf(toRemove)} a été retiré·e de l'évaluation.`)
   }
 
   const notFinished = requests.filter((r) => r.status === 'envoye' || r.status === 'brouillon').length
@@ -84,17 +110,26 @@ export default function SuiviEvaluation({ data, currentUser, evaluationId, onCha
       )}
 
       <h3 className="mb-3 text-lg font-semibold">Personnes interrogées</h3>
-      <ul className="mb-8 divide-y divide-line rounded-lg border border-line">
+      <ul className={`divide-y divide-line rounded-lg border border-line ${lastPersonHint ? 'mb-2' : 'mb-8'}`}>
         {requests.map((r) => (
           <li key={r.id} className="flex items-center justify-between px-5 py-3">
             <span>{nameOf(r.authorId)}</span>
             <span className="flex items-center gap-3 text-sm text-muted">
               {r.submittedAt && `le ${formatDate(r.submittedAt.slice(0, 10))}`}
               <Badge tone={r.status === 'termine' ? 'brand' : 'neutral'}>{REQUEST_STATUS_LABELS[r.status]}</Badge>
+              {canRemove(r.authorId) && (
+                <button
+                  onClick={() => setToRemove(r.authorId)}
+                  className="rounded-md px-2 py-1 text-sm font-medium text-muted hover:bg-cream hover:text-brand"
+                >
+                  Retirer
+                </button>
+              )}
             </span>
           </li>
         ))}
       </ul>
+      {lastPersonHint && <p className="mb-8 text-sm text-muted">{lastPersonHint}</p>}
 
       {evaluation.status === 'cloturee' && (
         <div className="mb-8 flex items-center justify-between rounded-lg bg-cream px-5 py-4 text-sm">
@@ -144,6 +179,22 @@ export default function SuiviEvaluation({ data, currentUser, evaluationId, onCha
           </div>
           <Button onClick={() => setConfirmClose(true)}>Clôturer</Button>
         </section>
+      )}
+
+      {requestToRemove && (
+        <ConfirmDialog
+          title={`Retirer ${nameOf(requestToRemove.authorId)} de l'évaluation ?`}
+          confirmLabel="Retirer"
+          onConfirm={handleRemove}
+          onCancel={() => setToRemove(null)}
+        >
+          <p>Sa demande de feedback sera annulée. Vous pourrez l'ajouter de nouveau plus tard.</p>
+          {requestToRemove.status === 'brouillon' && (
+            <p className="mt-2 font-medium text-brand">
+              Attention : cette personne a commencé à répondre. Son brouillon de réponse sera perdu.
+            </p>
+          )}
+        </ConfirmDialog>
       )}
 
       {confirmClose && (

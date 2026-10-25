@@ -155,6 +155,36 @@ export function addParticipant(data: AppData, evaluationId: string, userId: stri
   }
 }
 
+// Règle 6 bis : retourne la raison du refus, ou null si la personne peut être retirée.
+export function removeParticipantError(
+  evaluation: Evaluation,
+  requests: FeedbackRequest[],
+  userId: string,
+): string | null {
+  if (evaluation.status !== 'en_cours') return "L'évaluation n'est pas en cours : impossible de retirer une personne."
+  const request = requests.find((r) => r.evaluationId === evaluation.id && r.authorId === userId)
+  if (!request || !evaluation.participantIds.includes(userId)) return "Cette personne n'est pas interrogée."
+  if (request.status === 'termine') return 'Cette personne a déjà répondu : son feedback est conservé.'
+  if (request.status !== 'envoye' && request.status !== 'brouillon') return 'Cette demande ne peut pas être retirée.'
+  // Une évaluation lancée compte toujours au moins une personne interrogée (règle 4).
+  if (evaluation.participantIds.length <= 1) {
+    return "Impossible de retirer la dernière personne interrogée : clôturez plutôt l'évaluation."
+  }
+  return null
+}
+
+// Règle 6 bis : supprime la demande (et un éventuel brouillon de réponse) et retire la personne de l'évaluation.
+// Elle pourra être ajoutée de nouveau plus tard (nouvelle demande "envoye"). L'appelant doit avoir vérifié removeParticipantError.
+export function removeParticipant(data: AppData, evaluationId: string, userId: string): AppData {
+  return {
+    ...data,
+    evaluations: data.evaluations.map((e) =>
+      e.id === evaluationId ? { ...e, participantIds: e.participantIds.filter((id) => id !== userId) } : e,
+    ),
+    requests: data.requests.filter((r) => !(r.evaluationId === evaluationId && r.authorId === userId)),
+  }
+}
+
 // Règle 10 : les demandes non terminées expirent, l'évaluation est figée. Pas de réouverture possible.
 export function closeEvaluation(data: AppData, evaluationId: string): AppData {
   return {

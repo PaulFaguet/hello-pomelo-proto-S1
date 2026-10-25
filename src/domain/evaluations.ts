@@ -114,12 +114,54 @@ export function launchEvaluation(
   return { ...result.data, requests: [...result.data.requests, ...newRequests] }
 }
 
-// Liste provisoire de "Mes évaluations" (enrichie à l'étape 4) :
-// mes brouillons + les évaluations en cours que j'ai créées ou dont je suis le sujet.
+// "Mes évaluations" : mes brouillons + les évaluations en cours que j'ai créées ou dont je suis le sujet.
+// Les évaluations clôturées sont dans l'Historique.
 export function myActiveEvaluations(data: AppData, userId: string): Evaluation[] {
   return data.evaluations.filter(
     (e) =>
       (e.status === 'brouillon' && e.createdBy === userId) ||
       (e.status === 'en_cours' && (e.createdBy === userId || e.subjectId === userId)),
   )
+}
+
+// Compteur "3/5 terminés".
+export function progress(evaluation: Evaluation, requests: FeedbackRequest[]): { done: number; total: number } {
+  const own = requests.filter((r) => r.evaluationId === evaluation.id)
+  return { done: own.filter((r) => r.status === 'termine').length, total: own.length }
+}
+
+// Évaluation en retard : date limite dépassée alors qu'elle est toujours en cours.
+export function isEvaluationLate(evaluation: Evaluation, today: string): boolean {
+  return evaluation.status === 'en_cours' && evaluation.deadline < today
+}
+
+// Règle 6 : retourne la raison du refus, ou null si l'ajout est possible.
+export function addParticipantError(evaluation: Evaluation, userId: string): string | null {
+  if (evaluation.status !== 'en_cours') return "L'évaluation n'est plus en cours : impossible d'ajouter une personne."
+  if (!userId) return 'Choisissez une personne.'
+  if (userId === evaluation.subjectId) return 'La personne évaluée ne peut pas être interrogée.'
+  if (evaluation.participantIds.includes(userId)) return 'Cette personne est déjà interrogée.'
+  return null
+}
+
+// Règle 6 : la personne ajoutée reçoit une demande "envoye". L'appelant doit avoir vérifié addParticipantError.
+export function addParticipant(data: AppData, evaluationId: string, userId: string): AppData {
+  return {
+    ...data,
+    evaluations: data.evaluations.map((e) =>
+      e.id === evaluationId ? { ...e, participantIds: [...e.participantIds, userId] } : e,
+    ),
+    requests: [...data.requests, { id: crypto.randomUUID(), evaluationId, authorId: userId, status: 'envoye', answers: {} }],
+  }
+}
+
+// Règle 10 : les demandes non terminées expirent, l'évaluation est figée. Pas de réouverture possible.
+export function closeEvaluation(data: AppData, evaluationId: string): AppData {
+  return {
+    ...data,
+    evaluations: data.evaluations.map((e) => (e.id === evaluationId ? { ...e, status: 'cloturee' } : e)),
+    requests: data.requests.map((r) =>
+      r.evaluationId === evaluationId && (r.status === 'envoye' || r.status === 'brouillon') ? { ...r, status: 'expire' } : r,
+    ),
+  }
 }

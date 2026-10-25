@@ -4,13 +4,19 @@ import type { AppData } from './domain/types'
 import CreerEvaluation from './screens/CreerEvaluation'
 import Feedback from './screens/Feedback'
 import MesEvaluations from './screens/MesEvaluations'
+import MonEquipe from './screens/MonEquipe'
 import Repondre from './screens/Repondre'
+import SuiviEvaluation from './screens/SuiviEvaluation'
 import { initialState, loadState, saveState, type PersistedState } from './storage'
 
 type Tab = 'evaluations' | 'feedback' | 'historique' | 'equipe'
 
 // Écran courant (pas de routeur) : la liste de l'onglet, ou un écran de détail.
-type Screen = { name: 'tab' } | { name: 'creer'; evaluationId?: string } | { name: 'repondre'; requestId: string }
+type Screen =
+  | { name: 'tab' }
+  | { name: 'creer'; evaluationId?: string }
+  | { name: 'repondre'; requestId: string }
+  | { name: 'suivi'; evaluationId: string }
 
 const TAB_LABELS: Record<Tab, string> = {
   evaluations: 'Mes évaluations',
@@ -52,9 +58,10 @@ export default function App() {
     goTo({ name: 'tab' })
   }
 
-  function saveData(data: AppData, msg: string) {
+  // Enregistre les données modifiées, affiche un message et (par défaut) revient à la liste de l'onglet.
+  function saveData(data: AppData, msg: string, next: Screen = { name: 'tab' }) {
     setState((s) => ({ ...s, data }))
-    setScreen({ name: 'tab' })
+    setScreen(next)
     setMessage(msg)
   }
 
@@ -155,6 +162,15 @@ export default function App() {
             onDone={saveData}
             onBack={() => goTo({ name: 'tab' })}
           />
+        ) : screen.name === 'suivi' ? (
+          <SuiviEvaluation
+            key={screen.evaluationId}
+            data={state.data}
+            currentUser={currentUser}
+            evaluationId={screen.evaluationId}
+            onChange={(data, msg) => saveData(data, msg, screen)}
+            onBack={() => goTo({ name: 'tab' })}
+          />
         ) : activeTab === 'feedback' ? (
           <Feedback data={state.data} currentUser={currentUser} onOpen={(id) => goTo({ name: 'repondre', requestId: id })} />
         ) : activeTab === 'evaluations' ? (
@@ -163,7 +179,10 @@ export default function App() {
             currentUser={currentUser}
             onCreate={() => goTo({ name: 'creer' })}
             onEditDraft={(id) => goTo({ name: 'creer', evaluationId: id })}
+            onOpen={(id) => goTo({ name: 'suivi', evaluationId: id })}
           />
+        ) : activeTab === 'equipe' ? (
+          <MonEquipe data={state.data} currentUser={currentUser} onOpen={(id) => goTo({ name: 'suivi', evaluationId: id })} />
         ) : (
           <section className="rounded-lg bg-cream p-12 text-center text-sm text-muted">
             Onglet « {TAB_LABELS[activeTab]} » : contenu à venir.

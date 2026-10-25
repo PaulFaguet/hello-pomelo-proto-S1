@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
+import { pendingCount } from './domain/requests'
 import type { AppData } from './domain/types'
 import CreerEvaluation from './screens/CreerEvaluation'
+import Feedback from './screens/Feedback'
 import MesEvaluations from './screens/MesEvaluations'
+import Repondre from './screens/Repondre'
 import { initialState, loadState, saveState, type PersistedState } from './storage'
 
 type Tab = 'evaluations' | 'feedback' | 'historique' | 'equipe'
 
-// Écran courant (pas de routeur) : la liste de l'onglet, ou l'écran de création/reprise d'un brouillon.
-type Screen = { name: 'tab' } | { name: 'creer'; evaluationId?: string }
+// Écran courant (pas de routeur) : la liste de l'onglet, ou un écran de détail.
+type Screen = { name: 'tab' } | { name: 'creer'; evaluationId?: string } | { name: 'repondre'; requestId: string }
 
 const TAB_LABELS: Record<Tab, string> = {
   evaluations: 'Mes évaluations',
@@ -30,6 +33,7 @@ export default function App() {
     currentUser.role === 'manager'
       ? ['evaluations', 'feedback', 'historique', 'equipe']
       : ['evaluations', 'feedback', 'historique']
+  const toComplete = pendingCount(state.data, currentUser.id)
   // Si l'onglet courant n'existe pas pour ce profil (ex. "Mon équipe" pour un user), on revient au premier.
   const activeTab = tabs.includes(tab) ? tab : tabs[0]
 
@@ -115,6 +119,14 @@ export default function App() {
               }`}
             >
               {TAB_LABELS[t]}
+              {t === 'feedback' && toComplete > 0 && (
+                <span
+                  className="ml-2 rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white"
+                  title={`${toComplete} feedback${toComplete > 1 ? 's' : ''} à compléter`}
+                >
+                  {toComplete}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -134,6 +146,17 @@ export default function App() {
             onDone={saveData}
             onCancel={() => goTo({ name: 'tab' })}
           />
+        ) : screen.name === 'repondre' ? (
+          <Repondre
+            key={screen.requestId}
+            data={state.data}
+            currentUser={currentUser}
+            requestId={screen.requestId}
+            onDone={saveData}
+            onBack={() => goTo({ name: 'tab' })}
+          />
+        ) : activeTab === 'feedback' ? (
+          <Feedback data={state.data} currentUser={currentUser} onOpen={(id) => goTo({ name: 'repondre', requestId: id })} />
         ) : activeTab === 'evaluations' ? (
           <MesEvaluations
             data={state.data}

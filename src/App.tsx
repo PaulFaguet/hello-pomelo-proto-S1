@@ -36,19 +36,22 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen text-slate-800">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
-          <h1 className="text-lg font-semibold">Feedback entre collègues</h1>
+    <div className="min-h-screen">
+      <header className="border-b border-line bg-white">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-5">
+          <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <span className="inline-block h-3 w-3 rounded-full bg-brand" aria-hidden />
+            Feedback entre collègues
+          </h1>
           <div className="flex items-center gap-3">
-            <label htmlFor="profile" className="text-sm text-slate-500">
+            <label htmlFor="profile" className="text-sm text-muted">
               Profil simulé
             </label>
             <select
               id="profile"
               value={currentUser.id}
               onChange={(e) => switchUser(e.target.value)}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm"
+              className="rounded-lg border border-line bg-cream px-3 py-2 text-sm focus:outline-2 focus:outline-brand"
             >
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
@@ -58,7 +61,7 @@ export default function App() {
             </select>
             <button
               onClick={resetDemo}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100"
+              className="rounded-md bg-cream px-3 py-2 text-sm font-medium hover:bg-line"
             >
               Réinitialiser la démo
             </button>
@@ -66,21 +69,23 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-6">
-        <p className="mb-4 text-sm text-slate-500">
-          Connecté en tant que <span className="font-medium text-slate-800">{currentUser.name}</span>
-          {currentUser.role === 'manager' ? ' · Manager' : ' · Collaborateur'}
+      <main className="mx-auto max-w-5xl px-6 py-8">
+        <p className="mb-6 flex items-center gap-2 text-sm text-muted">
+          Connecté en tant que <span className="font-semibold text-ink">{currentUser.name}</span>
+          <span className="rounded bg-brand-soft px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-brand">
+            {currentUser.role === 'manager' ? 'Manager' : 'Collaborateur'}
+          </span>
         </p>
 
-        <nav className="mb-6 flex gap-1 border-b border-slate-200">
+        <nav className="mb-8 flex gap-1 border-b border-line">
           {tabs.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
+              className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium ${
                 t === activeTab
-                  ? 'border-indigo-600 text-indigo-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-brand text-brand'
+                  : 'border-transparent text-muted hover:text-ink'
               }`}
             >
               {TAB_LABELS[t]}
@@ -88,7 +93,7 @@ export default function App() {
           ))}
         </nav>
 
-        <section className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">
+        <section className="rounded-lg bg-cream p-12 text-center text-sm text-muted">
           Onglet « {TAB_LABELS[activeTab]} » : contenu à venir.
         </section>
       </main>

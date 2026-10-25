@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+/* Charte inspirée de hello-pomelo.com : fond blanc/crème, texte encre, accent framboise. */
+@theme {
+  --font-sans: "Fustat", ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #111821;
+  --color-muted: #747472;
+  --color-subtle: #b3b3b3;
+  --color-line: #e7e6e2;
+  --color-cream: #f7f6f3;
+  --color-brand: #d9306b;
+  --color-brand-dark: #b8245a;
+  --color-brand-light: #e883a6;
+  --color-brand-soft: #fff8fa;
+}
+
+body {
+  @apply bg-white font-sans text-ink antialiased;
+}

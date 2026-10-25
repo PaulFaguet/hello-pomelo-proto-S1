@@ -57,3 +57,33 @@ export function Badge({ children, tone = 'neutral' }: { children: ReactNode; ton
     </span>
   )
 }
+
+// Fenêtre de confirmation pour les actions définitives (ex. clôture).
+export function ConfirmDialog({
+  title,
+  children,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: {
+  title: string
+  children: ReactNode
+  confirmLabel: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-10 flex items-center justify-center bg-ink/40 p-4" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <h3 className="mb-3 text-lg font-semibold">{title}</h3>
+        <div className="mb-6 text-sm text-muted">{children}</div>
+        <div className="flex justify-end gap-3">
+          <Button onClick={onCancel}>Annuler</Button>
+          <Button variant="primary" onClick={onConfirm} autoFocus>
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

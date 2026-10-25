@@ -9,10 +9,11 @@ interface Props {
   data: AppData
   currentUser: User
   onOpen: (evaluationId: string) => void
+  onOpenResults: (evaluationId: string) => void
 }
 
 // Règle 8 : avancement des évaluations de MON équipe uniquement, sans le contenu avant clôture.
-export default function MonEquipe({ data, currentUser, onOpen }: Props) {
+export default function MonEquipe({ data, currentUser, onOpen, onOpenResults }: Props) {
   const today = todayISO()
   const team = getTeam(currentUser.id, data.users)
   const evaluations = teamEvaluations(data, currentUser)
@@ -62,9 +63,15 @@ export default function MonEquipe({ data, currentUser, onOpen }: Props) {
                           </span>
                           {late && <Badge tone="brand">En retard</Badge>}
                           <Badge tone={e.status === 'en_cours' ? 'brand' : 'neutral'}>{EVALUATION_STATUS_LABELS[e.status]}</Badge>
-                          <Button onClick={() => onOpen(e.id)} className="w-24">
-                            Suivre
-                          </Button>
+                          {e.status === 'cloturee' ? (
+                            <Button onClick={() => onOpenResults(e.id)} className="w-24">
+                              Résultats
+                            </Button>
+                          ) : (
+                            <Button onClick={() => onOpen(e.id)} className="w-24">
+                              Suivre
+                            </Button>
+                          )}
                         </div>
                       </li>
                     )

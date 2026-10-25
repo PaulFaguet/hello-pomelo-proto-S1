@@ -3,9 +3,11 @@ import { pendingCount } from './domain/requests'
 import type { AppData } from './domain/types'
 import CreerEvaluation from './screens/CreerEvaluation'
 import Feedback from './screens/Feedback'
+import Historique from './screens/Historique'
 import MesEvaluations from './screens/MesEvaluations'
 import MonEquipe from './screens/MonEquipe'
 import Repondre from './screens/Repondre'
+import Resultats from './screens/Resultats'
 import SuiviEvaluation from './screens/SuiviEvaluation'
 import { initialState, loadState, saveState, type PersistedState } from './storage'
 
@@ -17,6 +19,7 @@ type Screen =
   | { name: 'creer'; evaluationId?: string }
   | { name: 'repondre'; requestId: string }
   | { name: 'suivi'; evaluationId: string }
+  | { name: 'resultats'; evaluationId: string }
 
 const TAB_LABELS: Record<Tab, string> = {
   evaluations: 'Mes évaluations',
@@ -46,6 +49,10 @@ export default function App() {
   function goTo(next: Screen) {
     setScreen(next)
     setMessage(null)
+  }
+
+  function openResults(evaluationId: string) {
+    goTo({ name: 'resultats', evaluationId })
   }
 
   function selectTab(t: Tab) {
@@ -170,6 +177,14 @@ export default function App() {
             evaluationId={screen.evaluationId}
             onChange={(data, msg) => saveData(data, msg, screen)}
             onBack={() => goTo({ name: 'tab' })}
+            onOpenResults={openResults}
+          />
+        ) : screen.name === 'resultats' ? (
+          <Resultats
+            data={state.data}
+            currentUser={currentUser}
+            evaluationId={screen.evaluationId}
+            onBack={() => goTo({ name: 'tab' })}
           />
         ) : activeTab === 'feedback' ? (
           <Feedback data={state.data} currentUser={currentUser} onOpen={(id) => goTo({ name: 'repondre', requestId: id })} />
@@ -182,11 +197,14 @@ export default function App() {
             onOpen={(id) => goTo({ name: 'suivi', evaluationId: id })}
           />
         ) : activeTab === 'equipe' ? (
-          <MonEquipe data={state.data} currentUser={currentUser} onOpen={(id) => goTo({ name: 'suivi', evaluationId: id })} />
+          <MonEquipe
+            data={state.data}
+            currentUser={currentUser}
+            onOpen={(id) => goTo({ name: 'suivi', evaluationId: id })}
+            onOpenResults={openResults}
+          />
         ) : (
-          <section className="rounded-lg bg-cream p-12 text-center text-sm text-muted">
-            Onglet « {TAB_LABELS[activeTab]} » : contenu à venir.
-          </section>
+          <Historique data={state.data} currentUser={currentUser} onOpen={openResults} />
         )}
       </main>
     </div>

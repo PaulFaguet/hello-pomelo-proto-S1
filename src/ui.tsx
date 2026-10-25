@@ -73,7 +73,12 @@ export function ConfirmDialog({
   onCancel: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center bg-ink/40 p-4" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-10 flex items-center justify-center bg-ink/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      onKeyDown={(e) => e.key === 'Escape' && onCancel()}
+    >
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <h3 className="mb-3 text-lg font-semibold">{title}</h3>
         <div className="mb-6 text-sm text-muted">{children}</div>

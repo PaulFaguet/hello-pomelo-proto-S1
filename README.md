@@ -1,4 +1,4 @@
-# Feedback entre collègues — prototype
+# Hello Pomelo, feedbacks internes — prototype
 
 Prototype démontrable (pas de la production) d'une plateforme interne de feedback entre collègues.
 Aucun backend, aucune authentification : données fictives enregistrées dans le navigateur (localStorage).

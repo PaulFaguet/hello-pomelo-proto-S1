@@ -85,7 +85,7 @@ export default function App() {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-5">
           <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <span className="inline-block h-3 w-3 rounded-full bg-brand" aria-hidden />
-            Feedback entre collègues
+            Hello Pomelo, feedbacks internes
           </h1>
           <div className="flex items-center gap-3">
             <label htmlFor="profile" className="text-sm text-muted">

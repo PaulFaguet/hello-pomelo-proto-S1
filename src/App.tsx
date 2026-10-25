@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
+import type { AppData } from './domain/types'
+import CreerEvaluation from './screens/CreerEvaluation'
+import MesEvaluations from './screens/MesEvaluations'
 import { initialState, loadState, saveState, type PersistedState } from './storage'
 
 type Tab = 'evaluations' | 'feedback' | 'historique' | 'equipe'
+
+// Écran courant (pas de routeur) : la liste de l'onglet, ou l'écran de création/reprise d'un brouillon.
+type Screen = { name: 'tab' } | { name: 'creer'; evaluationId?: string }
 
 const TAB_LABELS: Record<Tab, string> = {
   evaluations: 'Mes évaluations',
@@ -13,6 +19,8 @@ const TAB_LABELS: Record<Tab, string> = {
 export default function App() {
   const [state, setState] = useState<PersistedState>(loadState)
   const [tab, setTab] = useState<Tab>('evaluations')
+  const [screen, setScreen] = useState<Screen>({ name: 'tab' })
+  const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => saveState(state), [state])
 
@@ -25,14 +33,32 @@ export default function App() {
   // Si l'onglet courant n'existe pas pour ce profil (ex. "Mon équipe" pour un user), on revient au premier.
   const activeTab = tabs.includes(tab) ? tab : tabs[0]
 
+  function goTo(next: Screen) {
+    setScreen(next)
+    setMessage(null)
+  }
+
+  function selectTab(t: Tab) {
+    setTab(t)
+    goTo({ name: 'tab' })
+  }
+
   function switchUser(userId: string) {
     setState((s) => ({ ...s, currentUserId: userId }))
+    goTo({ name: 'tab' })
+  }
+
+  function saveData(data: AppData, msg: string) {
+    setState((s) => ({ ...s, data }))
+    setScreen({ name: 'tab' })
+    setMessage(msg)
   }
 
   function resetDemo() {
     if (!window.confirm('Réinitialiser la démo ? Toutes les données créées seront perdues.')) return
     setState({ ...initialState(), currentUserId: state.currentUserId })
     setTab('evaluations')
+    goTo({ name: 'tab' })
   }
 
   return (
@@ -81,7 +107,7 @@ export default function App() {
           {tabs.map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => selectTab(t)}
               className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium ${
                 t === activeTab
                   ? 'border-brand text-brand'
@@ -93,9 +119,33 @@ export default function App() {
           ))}
         </nav>
 
-        <section className="rounded-lg bg-cream p-12 text-center text-sm text-muted">
-          Onglet « {TAB_LABELS[activeTab]} » : contenu à venir.
-        </section>
+        {message && (
+          <p className="mb-6 rounded-lg bg-brand-soft px-4 py-3 text-sm text-brand" role="status">
+            {message}
+          </p>
+        )}
+
+        {screen.name === 'creer' ? (
+          <CreerEvaluation
+            key={screen.evaluationId ?? 'new'}
+            data={state.data}
+            currentUser={currentUser}
+            evaluationId={screen.evaluationId}
+            onDone={saveData}
+            onCancel={() => goTo({ name: 'tab' })}
+          />
+        ) : activeTab === 'evaluations' ? (
+          <MesEvaluations
+            data={state.data}
+            currentUser={currentUser}
+            onCreate={() => goTo({ name: 'creer' })}
+            onEditDraft={(id) => goTo({ name: 'creer', evaluationId: id })}
+          />
+        ) : (
+          <section className="rounded-lg bg-cream p-12 text-center text-sm text-muted">
+            Onglet « {TAB_LABELS[activeTab]} » : contenu à venir.
+          </section>
+        )}
       </main>
     </div>
   )

@@ -5,6 +5,13 @@ Pas de backend ni d'authentification : données fictives enregistrées dans le n
 
 **Stack** : React 19, Vite, TypeScript strict, Tailwind.
 
+## Cadrage du sprint 1
+
+À la racine du dépôt :
+
+- [Cadrage Sprint 1 feedbacks internes.pdf](Cadrage%20Sprint%201%20feedbacks%20internes.pdf) : présentation du cadrage du sprint 1
+- [Cadrage_Sprint1_Feedback.xlsx](Cadrage_Sprint1_Feedback.xlsx) : backlog du sprint 1 (user stories, priorisation)
+
 ## Lancer
 
 Prérequis : Node.js 20+.

@@ -30,7 +30,10 @@ const TAB_LABELS: Record<Tab, string> = {
 
 export default function App() {
   const [state, setState] = useState<PersistedState>(loadState)
-  const [tab, setTab] = useState<Tab>('evaluations')
+  // Le manager arrive directement sur "Mon équipe".
+  const [tab, setTab] = useState<Tab>(() =>
+    state.data.users.find((u) => u.id === state.currentUserId)?.role === 'manager' ? 'equipe' : 'evaluations',
+  )
   const [screen, setScreen] = useState<Screen>({ name: 'tab' })
   const [message, setMessage] = useState<string | null>(null)
 
@@ -62,6 +65,7 @@ export default function App() {
 
   function switchUser(userId: string) {
     setState((s) => ({ ...s, currentUserId: userId }))
+    if (users.find((u) => u.id === userId)?.role === 'manager') setTab('equipe')
     goTo({ name: 'tab' })
   }
 
@@ -75,7 +79,7 @@ export default function App() {
   function resetDemo() {
     if (!window.confirm('Réinitialiser la démo ? Toutes les données créées seront perdues.')) return
     setState({ ...initialState(), currentUserId: state.currentUserId })
-    setTab('evaluations')
+    setTab(currentUser.role === 'manager' ? 'equipe' : 'evaluations')
     goTo({ name: 'tab' })
   }
 
